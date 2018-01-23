@@ -1,7 +1,12 @@
+'use latest';
+
 var express    = require('express');
 var Webtask    = require('webtask-tools');
 var bodyParser = require('body-parser');
+import { MongoClient } from 'mongodb';
 var app = express();
+
+const collection = 'whereiam';
 
 app.use(bodyParser.json());
 
@@ -24,120 +29,109 @@ var checkApiKey = function (req, res, next) {
 
 app.use(checkApiKey);
 
-function respond(res, status, body) {
+var respond = function(res, status, body) {
   res.writeHead(status, { "Content-type": "application/json" });
   var responseBody = (typeof(body) === "object") ? body : { "message": body };
   res.end(JSON.stringify(responseBody));
-}
+};
 
 // I'm using this as a health check
-app.get('/', function (req, res) {
+app.get('/', (req, res) => {
   res.sendStatus(200);
 });
 
 // GET all locations
-app.get('/iwas', function(req, res) {
-  req.webtaskContext.storage.get(function(error, data) {
-    if (error) {
-      respond(res, 500, `Server error when reading database: $(error)`);
+app.get('/iwas', (req, res) => {
+  const { MONGO_URL } = req.webtaskContext.secrets;
+
+  MongoClient.connect(MONGO_URL, (err, db) => {
+    if (err) {
+      console.log(err);
+      respond(res, 500, "Server error when opening database");
       return;
     }
-    
-    if (!data || !data.checkins) {
-      respond(res, 500, "No checkins are stored in database");
-      return;
-    }
-    
-    respond(res, 200, data.checkins);
-  });
+
+    db.collection(collection).find({}, {"_id": 0}).sort({"timestamp": -1}).toArray( (err, result) => {
+      db.close();
+      if (err) {
+        console.log(err);
+        respond(res, 500, "Server error when reading database");
+      }
+      
+      respond(res, 200, result);
+    });
+  }); 
 });
 
 // GET the last location
-app.get('/iam', function(req, res) {
-  req.webtaskContext.storage.get(function(error, data) {
-    if (error) {
-      respond(res, 500, `Server error when reading database: $(error)`);
+app.get('/iam', (req, res) => {
+  const { MONGO_URL } = req.webtaskContext.secrets;
+
+  MongoClient.connect(MONGO_URL, (err, db) => {
+    if (err) {
+      console.log(err);
+      respond(res, 500, "Server error when opening database");
       return;
     }
-    
-    if (!data || !data.checkins) {
-      respond(res, 500, "No checkins are stored in database");
-      return;
-    }
-    
-    respond(res, 200, data.checkins[data.checkins.length - 1]);
-  });  
+
+    db.collection(collection).find({}, {"_id": 0}).sort({"timestamp": -1}).limit(1).toArray( (err, result) => {
+      db.close();
+      if (err) {
+        console.log(err);
+        respond(res, 500, "Server error when reading database");
+        return;
+      }
+
+      respond(res, 200, result[0]);
+    });
+  });
 });
 
-function findMissingKeys(json) {
+var findMissingKeys = function(json) {
   // required json keys
-  required = [ "latitude", "longitude" ];
-  missing = [];
+  let required = [ "latitude", "longitude" ];
+  let missing = [];
   for (var i = 0, len = required.length; i < len; i++) {
     if (!(required[i] in json)) {
       missing.push(required[i]);
     }
   }
   return missing;
-}
+};
 
 // POST a new location
-app.post('/iam', function (req, res) {
-  req.webtaskContext.storage.get(function(error, data) {
-    if (error) {
-      respond(res, 500, `Server error when reading database: $(error)`);
+app.post('/iam', (req, res) => {
+  const { MONGO_URL } = req.webtaskContext.secrets;
+  
+  let missing_keys = findMissingKeys(req.body);
+  if (missing_keys.length > 0) {
+    respond(res, 400, "The following required keys are missing: " + JSON.stringify(missing_keys));
+    return;
+  }
+  var checkin = {
+    "latitude": req.body.latitude,
+    "longitude": req.body.longitude,
+    "timestamp": (new Date()).toISOString()
+  };
+  
+  MongoClient.connect(MONGO_URL, (err, db) => {
+    if (err) {
+      console.log(err);
+      respond(res, 500, "Server error when reading database");
       return;
     }
-    
-    if (!data) {
-      data = {};
-      data.checkins = [];
-    }
-    
-    console.log(req.body);
-    
-    missing_keys = findMissingKeys(req.body);
-    if (missing_keys.length > 0) {
-      respond(res, 400, "The following required keys are missing: " + JSON.stringify(missing_keys));
-      return;
-    }
-    var checkin = {
-      "latitude": req.body.latitude,
-      "longitude": req.body.longitude,
-      "timestamp": (new Date()).toISOString()
-    };
-
-    data.checkins.push(checkin);
-    
-    req.webtaskContext.storage.set(data, function(error) {
-      if (error) {
-        respond(res, 500, `Server error when writing database: $(error)`);
+    db.collection(collection).insertOne(checkin, (err, result) => {
+      db.close();
+      if (err) {
+        console.log(err);
+        respond(res, 500, "Server error when writing database");
         return;
       }
-      
+      console.log(result);
       respond(res, 200, "Checkin added");
     });
   });
 });
 
-// app.post('/clear', function(req, res) {
-//   req.webtaskContext.storage.get(function(error, data) {
-//     if (error) {
-//       respond(res, 500, `Server error when reading db: ${error}`);
-//       return;
-//     }
-    
-//     data.checkins = [];
-    
-//     req.webtaskContext.storage.set(data, function(error) {
-//       if (error) {
-//         respond(res, 500, `Server error when writing db: ${error}`);
-//         return;
-//       }
-      
-//       respond(res, 200, "Checkins cleared");
-//     });
-//   });
-// });
 
 module.exports = Webtask.fromExpress(app);
