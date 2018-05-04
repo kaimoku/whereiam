@@ -44,15 +44,16 @@ app.get('/', (req, res) => {
 app.get('/iwas', (req, res) => {
   const { MONGO_URL } = req.webtaskContext.secrets;
 
-  MongoClient.connect(MONGO_URL, (err, db) => {
+  MongoClient.connect(MONGO_URL, { auth: { user: MONGO_USER, password: MONGO_PASSWORD, } }, (err, database) => {
     if (err) {
       console.log(err);
       respond(res, 500, "Server error when opening database");
       return;
     }
 
+    const db = database.db('whereiam');
     db.collection(collection).find({}, {"_id": 0}).sort({"timestamp": -1}).toArray( (err, result) => {
-      db.close();
+      database.close();
       if (err) {
         console.log(err);
         respond(res, 500, "Server error when reading database");
@@ -66,16 +67,19 @@ app.get('/iwas', (req, res) => {
 // GET the last location
 app.get('/iam', (req, res) => {
   const { MONGO_URL } = req.webtaskContext.secrets;
+  const { MONGO_USER } = req.webtaskContext.secrets;
+  const { MONGO_PASSWORD } = req.webtaskContext.secrets;
 
-  MongoClient.connect(MONGO_URL, (err, db) => {
+  MongoClient.connect(MONGO_URL, { auth: { user: MONGO_USER, password: MONGO_PASSWORD, } }, (err, database) => {
     if (err) {
       console.log(err);
       respond(res, 500, "Server error when opening database");
       return;
     }
-
+    
+    const db = database.db('whereiam');
     db.collection(collection).find({}, {"_id": 0}).sort({"timestamp": -1}).limit(1).toArray( (err, result) => {
-      db.close();
+      database.close();
       if (err) {
         console.log(err);
         respond(res, 500, "Server error when reading database");
@@ -114,14 +118,16 @@ app.post('/iam', (req, res) => {
     "timestamp": (new Date()).toISOString()
   };
   
-  MongoClient.connect(MONGO_URL, (err, db) => {
+  MongoClient.connect(MONGO_URL, { auth: { user: MONGO_USER, password: MONGO_PASSWORD, } }, (err, database) => {
     if (err) {
       console.log(err);
       respond(res, 500, "Server error when reading database");
       return;
     }
+    
+    const db = database.db('whereiam');
     db.collection(collection).insertOne(checkin, (err, result) => {
-      db.close();
+      database.close();
       if (err) {
         console.log(err);
         respond(res, 500, "Server error when writing database");
