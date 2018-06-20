@@ -121,6 +121,12 @@ app.post('/iam', (req, res) => {
     "longitude": req.body.longitude,
     "timestamp": (new Date()).toISOString()
   };
+  if (req.body.city) {
+    checkin.city = req.body.city;
+  }
+  if (req.body.state) {
+    checkin.state = req.body.state;
+  }
   
   MongoClient.connect(MONGO_URL, { auth: { user: MONGO_USER, password: MONGO_PASSWORD, } }, (err, database) => {
     if (err) {
