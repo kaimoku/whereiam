@@ -59,9 +59,18 @@ app.get('/umap', (req, res) => {
         respond(res, 500, "Server error when reading database");
         return;
       }
-      console.log(result);
-
-      respond(res, 200, result[0]);
+      
+      let csv = 'lat,lng,label\n';
+      result.forEach(location => {
+        csv += location.latitude + ',' + location.longitude + ',';
+        if (location.hasOwnProperty('label')) {
+          csv += location.label;
+        }
+        csv += '\n';
+      });
+      
+      res.writeHead(200, { "Content-type": "text/csv" });
+      res.end(csv);
     });
   });
 });
@@ -126,7 +135,7 @@ app.get('/iam', (req, res) => {
 
 var findMissingKeys = function(json) {
   // required json keys
-  let required = [ "latitude", "longitude" ];
+  let required = [ "latitude", "longitude", "label" ];
   let missing = [];
   for (var i = 0, len = required.length; i < len; i++) {
     if (!(required[i] in json)) {
@@ -150,7 +159,8 @@ app.post('/iam', (req, res) => {
   var checkin = {
     "latitude": req.body.latitude,
     "longitude": req.body.longitude,
-    "timestamp": (new Date()).toISOString()
+    "timestamp": (new Date()).toISOString(),
+    "label": req.body.label
   };
   if (req.body.city) {
     checkin.city = req.body.city;
