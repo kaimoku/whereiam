@@ -11,18 +11,20 @@ const collection = 'whereiam';
 app.use(bodyParser.json());
 
 var checkApiKey = function (req, res, next) {
-  console.log(req.originalUrl);
-  console.log(req.path);
+  if (req.path.includes('umap')) {
+    next();
+    return;
+  }
   var apiKey = req.header('apikey');
   if (apiKey === null || apiKey === undefined) {
     res.sendStatus(400);
     return;
   } 
-  if (apiKey == req.webtaskContext.secrets.postkey) {
+  if (apiKey === req.webtaskContext.secrets.postkey) {
     next();
     return;
   }
-  if (req.method == "GET" && apiKey == req.webtaskContext.secrets.apikey) {
+  if (req.method === "GET" && apiKey === req.webtaskContext.secrets.apikey) {
     next();
     return;
   }
@@ -38,7 +40,30 @@ var respond = function(res, status, body) {
 };
 
 app.get('/umap', (req, res) => {
-  res.sendStatus(200);
+  const { MONGO_URL } = req.webtaskContext.secrets;
+  const { MONGO_USER } = req.webtaskContext.secrets;
+  const { MONGO_PASSWORD } = req.webtaskContext.secrets;
+
+  MongoClient.connect(MONGO_URL, { auth: { user: MONGO_USER, password: MONGO_PASSWORD, } }, (err, database) => {
+    if (err) {
+      console.log(err);
+      respond(res, 500, "Server error when opening database");
+      return;
+    }
+    
+    const db = database.db('whereiam');
+    db.collection(collection).find().sort({"timestamp": -1}).toArray( (er, result) => {
+      database.close();
+      if (er) {
+        console.log(er);
+        respond(res, 500, "Server error when reading database");
+        return;
+      }
+      console.log(result);
+
+      respond(res, 200, result[0]);
+    });
+  });
 });
 
 // I'm using this as a health check
@@ -132,6 +157,9 @@ app.post('/iam', (req, res) => {
   }
   if (req.body.state) {
     checkin.state = req.body.state;
+  }
+  if (req.body.altitude) {
+    checkin.altitude = req.body.altitude;
   }
   
   MongoClient.connect(MONGO_URL, { auth: { user: MONGO_USER, password: MONGO_PASSWORD, } }, (err, database) => {
