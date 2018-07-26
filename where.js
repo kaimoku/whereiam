@@ -37,6 +37,10 @@ var respond = function(res, status, body) {
   res.end(JSON.stringify(responseBody));
 };
 
+app.get('/umap', (req, res) => {
+  res.sendStatus(200);
+});
+
 // I'm using this as a health check
 app.get('/', (req, res) => {
   res.sendStatus(200);
