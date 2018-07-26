@@ -11,6 +11,8 @@ const collection = 'whereiam';
 app.use(bodyParser.json());
 
 var checkApiKey = function (req, res, next) {
+  console.log(req.originalUrl);
+  console.log(req.path);
   var apiKey = req.header('apikey');
   if (apiKey === null || apiKey === undefined) {
     res.sendStatus(400);
