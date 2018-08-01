@@ -42,7 +42,7 @@ app.use((req, res, next) => {
   req.db = {
     "url": MONGO_URL,
     "user": MONGO_USER,
-    "password": MONGO_PASSWORD
+    "pw": MONGO_PASSWORD
   };
   next();
   return;
@@ -55,11 +55,7 @@ var respond = function(res, status, body) {
 };
 
 app.get('/umap', (req, res) => {
-  const { MONGO_URL } = req.webtaskContext.secrets;
-  const { MONGO_USER } = req.webtaskContext.secrets;
-  const { MONGO_PASSWORD } = req.webtaskContext.secrets;
-
-  MongoClient.connect(MONGO_URL, { auth: { user: MONGO_USER, password: MONGO_PASSWORD, } }, (err, database) => {
+  MongoClient.connect(req.db.url, { auth: { user: req.db.user, password: req.db.pw, } }, (err, database) => {
     if (err) {
       console.log(err);
       respond(res, 500, "Server error when opening database");
@@ -97,11 +93,7 @@ app.get('/', (req, res) => {
 
 // GET all locations
 app.get('/iwas', (req, res) => {
-  const { MONGO_URL } = req.webtaskContext.secrets;
-  const { MONGO_USER } = req.webtaskContext.secrets;
-  const { MONGO_PASSWORD } = req.webtaskContext.secrets;
-  
-  MongoClient.connect(MONGO_URL, { auth: { user: MONGO_USER, password: MONGO_PASSWORD, } }, (err, database) => {
+  MongoClient.connect(req.db.url, { auth: { user: req.db.user, password: req.db.pw, } }, (err, database) => {
     if (err) {
       console.log(err);
       respond(res, 500, "Server error when opening database");
@@ -109,10 +101,10 @@ app.get('/iwas', (req, res) => {
     }
 
     const db = database.db('whereiam');
-    db.collection(collection).find({}, {"_id": 0}).sort({"timestamp": -1}).toArray( (err, result) => {
+    db.collection(collection).find({}, {"_id": 0}).sort({"timestamp": -1}).toArray( (er, result) => {
       database.close();
-      if (err) {
-        console.log(err);
+      if (er) {
+        console.log(er);
         respond(res, 500, "Server error when reading database");
       }
       
@@ -123,11 +115,7 @@ app.get('/iwas', (req, res) => {
 
 // GET the last location
 app.get('/iam', (req, res) => {
-  const { MONGO_URL } = req.webtaskContext.secrets;
-  const { MONGO_USER } = req.webtaskContext.secrets;
-  const { MONGO_PASSWORD } = req.webtaskContext.secrets;
-
-  MongoClient.connect(MONGO_URL, { auth: { user: MONGO_USER, password: MONGO_PASSWORD, } }, (err, database) => {
+  MongoClient.connect(req.db.url, { auth: { user: req.db.user, password: req.db.pw, } }, (err, database) => {
     if (err) {
       console.log(err);
       respond(res, 500, "Server error when opening database");
@@ -135,10 +123,10 @@ app.get('/iam', (req, res) => {
     }
     
     const db = database.db('whereiam');
-    db.collection(collection).find({}, {"_id": 0}).sort({"timestamp": -1}).limit(1).toArray( (err, result) => {
+    db.collection(collection).find({}, {"_id": 0}).sort({"timestamp": -1}).limit(1).toArray( (er, result) => {
       database.close();
-      if (err) {
-        console.log(err);
+      if (er) {
+        console.log(er);
         respond(res, 500, "Server error when reading database");
         return;
       }
@@ -162,10 +150,6 @@ var findMissingKeys = function(json) {
 
 // POST a new location
 app.post('/iam', (req, res) => {
-  const { MONGO_URL } = req.webtaskContext.secrets;
-  const { MONGO_USER } = req.webtaskContext.secrets;
-  const { MONGO_PASSWORD } = req.webtaskContext.secrets;
-  
   let missing_keys = findMissingKeys(req.body);
   if (missing_keys.length > 0) {
     respond(res, 400, "The following required keys are missing: " + JSON.stringify(missing_keys));
@@ -187,7 +171,7 @@ app.post('/iam', (req, res) => {
     checkin.altitude = req.body.altitude;
   }
   
-  MongoClient.connect(MONGO_URL, { auth: { user: MONGO_USER, password: MONGO_PASSWORD, } }, (err, database) => {
+  MongoClient.connect(req.db.url, { auth: { user: req.db.user, password: req.db.pw, } }, (err, database) => {
     if (err) {
       console.log(err);
       respond(res, 500, "Server error when reading database");
@@ -195,10 +179,10 @@ app.post('/iam', (req, res) => {
     }
     
     const db = database.db('whereiam');
-    db.collection(collection).insertOne(checkin, (err, result) => {
+    db.collection(collection).insertOne(checkin, (er, result) => {
       database.close();
-      if (err) {
-        console.log(err);
+      if (er) {
+        console.log(er);
         respond(res, 500, "Server error when writing database");
         return;
       }
@@ -209,12 +193,9 @@ app.post('/iam', (req, res) => {
 });
 
 app.get('/iam/:id', (req, res) => {
-  const { MONGO_URL } = req.webtaskContext.secrets;
-  const { MONGO_USER } = req.webtaskContext.secrets;
-  const { MONGO_PASSWORD } = req.webtaskContext.secrets;
   let id = ObjectId(req.params.id);
 
-  MongoClient.connect(req.db.url, { auth: { user: req.db.user, password: req.db.password, } }, (err, database) => {
+  MongoClient.connect(req.db.url, { auth: { user: req.db.user, password: req.db.pw, } }, (err, database) => {
     if (err) {
       console.log(err);
       respond(res, 500, "Server error when opening database");
