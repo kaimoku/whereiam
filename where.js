@@ -193,5 +193,31 @@ app.post('/iam', (req, res) => {
   });
 });
 
+app.get('/iam/:id', (req, res) => {
+  const { MONGO_URL } = req.webtaskContext.secrets;
+  const { MONGO_USER } = req.webtaskContext.secrets;
+  const { MONGO_PASSWORD } = req.webtaskContext.secrets;
+  let id = req.params.id;
+
+  MongoClient.connect(MONGO_URL, { auth: { user: MONGO_USER, password: MONGO_PASSWORD, } }, (err, database) => {
+    if (err) {
+      console.log(err);
+      respond(res, 500, "Server error when opening database");
+      return;
+    }
+    
+    const db = database.db('whereiam');
+    db.collection(collection).find({"_id": id}).toArray( (er, result) => {
+      database.close();
+      if (er) {
+        console.log(er);
+        respond(res, 500, "Server error when reading database");
+        return;
+      }
+
+      respond(res, 200, result[0]);
+    });
+  });
+});
 
 module.exports = Webtask.fromExpress(app);
