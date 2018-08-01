@@ -34,6 +34,20 @@ var checkApiKey = function (req, res, next) {
 
 app.use(checkApiKey);
 
+app.use((req, res, next) => {
+  const { MONGO_URL } = req.webtaskContext.secrets;
+  const { MONGO_USER } = req.webtaskContext.secrets;
+  const { MONGO_PASSWORD } = req.webtaskContext.secrets;
+
+  req.db = {
+    "url": MONGO_URL,
+    "user": MONGO_USER,
+    "password": MONGO_PASSWORD
+  };
+  next();
+  return;
+});
+
 var respond = function(res, status, body) {
   res.writeHead(status, { "Content-type": "application/json" });
   var responseBody = (typeof(body) === "object") ? body : { "message": body };
@@ -200,14 +214,13 @@ app.get('/iam/:id', (req, res) => {
   const { MONGO_PASSWORD } = req.webtaskContext.secrets;
   let id = ObjectId(req.params.id);
 
-  MongoClient.connect(MONGO_URL, { auth: { user: MONGO_USER, password: MONGO_PASSWORD, } }, (err, database) => {
+  MongoClient.connect(req.db.url, { auth: { user: req.db.user, password: req.db.password, } }, (err, database) => {
     if (err) {
       console.log(err);
       respond(res, 500, "Server error when opening database");
       return;
     }
     
-    console.log("id " + id);
     const db = database.db('whereiam');
     db.collection(collection).find({"_id": id}).toArray( (er, result) => {
       database.close();
@@ -216,7 +229,7 @@ app.get('/iam/:id', (req, res) => {
         respond(res, 500, "Server error when reading database");
         return;
       }
-      console.log("result: " + result);
+
       respond(res, 200, result[0]);
     });
   });
