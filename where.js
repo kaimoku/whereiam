@@ -4,6 +4,7 @@ var express    = require('express');
 var Webtask    = require('webtask-tools');
 var bodyParser = require('body-parser');
 import { MongoClient } from 'mongodb';
+import { ObjectId } from 'mongodb';
 var app = express();
 
 const collection = 'whereiam';
@@ -197,7 +198,7 @@ app.get('/iam/:id', (req, res) => {
   const { MONGO_URL } = req.webtaskContext.secrets;
   const { MONGO_USER } = req.webtaskContext.secrets;
   const { MONGO_PASSWORD } = req.webtaskContext.secrets;
-  let id = req.params.id;
+  let id = ObjectId(req.params.id);
 
   MongoClient.connect(MONGO_URL, { auth: { user: MONGO_USER, password: MONGO_PASSWORD, } }, (err, database) => {
     if (err) {
