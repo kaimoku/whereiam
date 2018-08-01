@@ -206,6 +206,7 @@ app.get('/iam/:id', (req, res) => {
       return;
     }
     
+    console.log("id " + id);
     const db = database.db('whereiam');
     db.collection(collection).find({"_id": id}).toArray( (er, result) => {
       database.close();
@@ -214,7 +215,7 @@ app.get('/iam/:id', (req, res) => {
         respond(res, 500, "Server error when reading database");
         return;
       }
-
+      console.log("result: " + result);
       respond(res, 200, result[0]);
     });
   });
