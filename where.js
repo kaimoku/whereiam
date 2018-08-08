@@ -190,6 +190,7 @@ app.post('/iam', (req, res) => {
         return;
       }
       checkin.previous = result[0]._id;
+      console.log(checkin);
       db.collection(collection).insertOne(checkin, (dberr, insres) => {
         database.close();
         if (dberr) {
