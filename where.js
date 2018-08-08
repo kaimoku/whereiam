@@ -183,7 +183,6 @@ app.post('/iam', (req, res) => {
     
     const db = database.db('whereiam');
     db.collection(collection).find({}, {"_id": 0}).sort({"timestamp": -1}).limit(1).toArray( (er, result) => {
-      database.close();
       if (er) {
         console.log(er);
         respond(res, 500, "Server error when reading database");
