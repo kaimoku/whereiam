@@ -188,7 +188,7 @@ app.post('/iam', (req, res) => {
         respond(res, 500, "Server error when reading database");
         return;
       }
-      checkin.previous = result[0]._id;
+      checkin.previous = result[0]._id.toString();
       console.log(checkin);
       db.collection(collection).insertOne(checkin, (dberr, insres) => {
         database.close();
