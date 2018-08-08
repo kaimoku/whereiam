@@ -182,15 +182,24 @@ app.post('/iam', (req, res) => {
     }
     
     const db = database.db('whereiam');
-    db.collection(collection).insertOne(checkin, (er, result) => {
+    db.collection(collection).find({}, {"_id": 0}).sort({"timestamp": -1}).limit(1).toArray( (er, result) => {
       database.close();
       if (er) {
         console.log(er);
-        respond(res, 500, "Server error when writing database");
+        respond(res, 500, "Server error when reading database");
         return;
       }
-      console.log(result);
-      respond(res, 200, "Checkin added");
+      checkin.previous = result[0]._id;
+      db.collection(collection).insertOne(checkin, (dberr, insres) => {
+        database.close();
+        if (dberr) {
+          console.log(dberr);
+          respond(res, 500, "Server error when writing database");
+          return;
+        }
+        
+        respond(res, 200, "Checkin added");
+      });
     });
   });
 });
