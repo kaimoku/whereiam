@@ -170,7 +170,10 @@ app.post('/iam', (req, res) => {
   if (req.body.altitude) {
     checkin.altitude = req.body.altitude;
   }
-  
+  if (req.body.timestamp) {
+    checkin.timestamp = new Date(req.body.timestamp).toISOString();
+  }
+
   MongoClient.connect(req.db.url, { auth: { user: req.db.user, password: req.db.pw, } }, (err, database) => {
     if (err) {
       console.log(err);
