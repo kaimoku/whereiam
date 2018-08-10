@@ -95,7 +95,7 @@ app.get('/geojson', (req, res) => {
     }
     
     const db = database.db('whereiam');
-    db.collection(collection).find().toArray( (er, result) => {
+    db.collection(collection).find().sort({"timestamp": -1}).toArray( (er, result) => {
       database.close();
       if (er) {
         console.log(er);
@@ -107,7 +107,9 @@ app.get('/geojson', (req, res) => {
         "type": "FeatureCollection"
       };
 
-      let color = "#FF0000";
+      let markerColor = "#FF0000";
+      let markerSymbol = "star-stroked";
+      let markerSize = "medium";
       let features = [];
       result.forEach(loc => {
         let point = {
@@ -118,9 +120,9 @@ app.get('/geojson', (req, res) => {
             "timestamp": loc.timestamp,
             "altitude": loc.altitude ? loc.altitude : null,
             "previous": loc.previous ? loc.previous : null,
-            "marker-color": color,
-            "marker-size": "small",
-            "marker-symbol": "",
+            "marker-color": markerColor,
+            "marker-size": markerSize,
+            "marker-symbol": markerSymbol,
           },
           "geometry": {
             "type": "Point",
@@ -128,8 +130,11 @@ app.get('/geojson', (req, res) => {
           }
         };
         features.push(point);
-        color = "#7E7E7E";
+        markerColor = "#7E7E7E";
+        markerSize = "small";
+        markerSymbol = "";
       });
+      features.reverse();
       geojson.features = features;
       
       res.writeHead(200, { "Content-type": "application/vnd.geo+json" });
