@@ -12,7 +12,7 @@ const collection = 'whereiam';
 app.use(bodyParser.json());
 
 var checkApiKey = function (req, res, next) {
-  if (req.path.includes('umap')) {
+  if (req.path.includes('umap') || req.path.includes('geojson')) {
     next();
     return;
   }
@@ -82,6 +82,52 @@ app.get('/umap', (req, res) => {
       
       res.writeHead(200, { "Content-type": "text/csv" });
       res.end(csv);
+    });
+  });
+});
+
+app.get('/geojson', (req, res) => {
+  MongoClient.connect(req.db.url, { auth: { user: req.db.user, password: req.db.pw, } }, (err, database) => {
+    if (err) {
+      console.log(err);
+      respond(res, 500, "Server error when opening database");
+      return;
+    }
+    
+    const db = database.db('whereiam');
+    db.collection(collection).find().sort({"timestamp": -1}).toArray( (er, result) => {
+      database.close();
+      if (er) {
+        console.log(er);
+        respond(res, 500, "Server error when reading database");
+        return;
+      }
+      
+      let geojson = {
+        "type": "FeatureCollection"
+      };
+
+      let features = [];
+      result.forEach(loc => {
+        let point = {
+          "type": "Feature",
+          "properties": {
+            "name": loc.label,
+            "timestamp": loc.timestamp,
+            "altitude": loc.altitude ? loc.altitude : null,
+            "previous": loc.previous ? loc.previous : null
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [ loc.longitude, loc.latitude ]
+          }
+        };
+        features.push(point);
+      });
+      geojson.features = features;
+      
+      res.writeHead(200, { "Content-type": "application/vnd.geo+json" });
+      res.end(geojson);
     });
   });
 });
