@@ -119,7 +119,7 @@ app.get('/geojson', (req, res) => {
           },
           "geometry": {
             "type": "Point",
-            "coordinates": [ loc.longitude, loc.latitude ]
+            "coordinates": [ parseFloat(loc.longitude), parseFloat(loc.latitude) ]
           }
         };
         features.push(point);
