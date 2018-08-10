@@ -127,7 +127,7 @@ app.get('/geojson', (req, res) => {
       geojson.features = features;
       
       res.writeHead(200, { "Content-type": "application/vnd.geo+json" });
-      res.end(geojson);
+      res.end(JSON.stringify(geojson));
     });
   });
 });
