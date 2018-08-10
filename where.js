@@ -95,7 +95,7 @@ app.get('/geojson', (req, res) => {
     }
     
     const db = database.db('whereiam');
-    db.collection(collection).find().sort({"timestamp": -1}).toArray( (er, result) => {
+    db.collection(collection).find().toArray( (er, result) => {
       database.close();
       if (er) {
         console.log(er);
