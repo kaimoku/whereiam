@@ -107,15 +107,20 @@ app.get('/geojson', (req, res) => {
         "type": "FeatureCollection"
       };
 
+      let color = "#FF0000";
       let features = [];
       result.forEach(loc => {
         let point = {
           "type": "Feature",
           "properties": {
+            "id": loc._id.toString(),
             "name": loc.label,
             "timestamp": loc.timestamp,
             "altitude": loc.altitude ? loc.altitude : null,
-            "previous": loc.previous ? loc.previous : null
+            "previous": loc.previous ? loc.previous : null,
+            "marker-color": color,
+            "marker-size": "small",
+            "marker-symbol": "",
           },
           "geometry": {
             "type": "Point",
@@ -123,6 +128,7 @@ app.get('/geojson', (req, res) => {
           }
         };
         features.push(point);
+        color = "#7E7E7E";
       });
       geojson.features = features;
       
