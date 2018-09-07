@@ -120,6 +120,8 @@ app.get('/geojson', (req, res) => {
             "timestamp": loc.timestamp,
             "altitude": loc.altitude ? loc.altitude : null,
             "previous": loc.previous ? loc.previous : null,
+            "city": loc.city ? loc.city : null,
+            "state": loc.state ? loc.state : null,
             "marker-color": markerColor,
             "marker-size": markerSize,
             "marker-symbol": markerSymbol,
