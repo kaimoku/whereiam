@@ -122,6 +122,7 @@ app.get('/geojson', (req, res) => {
             "previous": loc.previous ? loc.previous : null,
             "city": loc.city ? loc.city : null,
             "state": loc.state ? loc.state : null,
+            "arrivalDate": loc.arrivalDate ? loc.arrivalDate : null,
             "marker-color": markerColor,
             "marker-size": markerSize,
             "marker-symbol": markerSymbol,
@@ -231,6 +232,9 @@ app.post('/iam', (req, res) => {
   }
   if (req.body.timestamp) {
     checkin.timestamp = new Date(req.body.timestamp).toISOString();
+  }
+  if (req.body.arrivalDate) {
+    checkin.arrivalDate = req.body.arrivalDate;
   }
 
   MongoClient.connect(req.db.url, { auth: { user: req.db.user, password: req.db.pw, } }, (err, database) => {
