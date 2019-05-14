@@ -118,7 +118,7 @@ app.get('/geojson', (req, res) => {
             "id": loc._id.toString(),
             "name": loc.label,
             "timestamp": loc.timestamp,
-            "elevation": loc.altitude ? loc.altitude : null,
+            "elevation": loc.elevation ? loc.elevation : null,
             "previous": loc.previous ? loc.previous : null,
             "city": loc.city ? loc.city : null,
             "state": loc.state ? loc.state : null,
