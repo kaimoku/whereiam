@@ -227,8 +227,8 @@ app.post('/iam', (req, res) => {
   if (req.body.state) {
     checkin.state = req.body.state;
   }
-  if (req.body.altitude) {
-    checkin.altitude = req.body.altitude;
+  if (req.body.elevation) {
+    checkin.elevation = req.body.elevation;
   }
   if (req.body.timestamp) {
     checkin.timestamp = new Date(req.body.timestamp).toISOString();
