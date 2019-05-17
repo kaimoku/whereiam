@@ -110,6 +110,9 @@ app.get('/geojson', (req, res) => {
       let markerColor = "#FF0000";
       let markerSymbol = "star-stroked";
       let markerSize = "medium";
+      let umapOptions = {
+        "color": "Red"
+      };
       let features = [];
       result.forEach(loc => {
         let point = {
@@ -126,6 +129,7 @@ app.get('/geojson', (req, res) => {
             "marker-color": markerColor,
             "marker-size": markerSize,
             "marker-symbol": markerSymbol,
+            "_umap_options": umapOptions
           },
           "geometry": {
             "type": "Point",
@@ -136,6 +140,7 @@ app.get('/geojson', (req, res) => {
         markerColor = "#7E7E7E";
         markerSize = "small";
         markerSymbol = "";
+        umapOptions.color = "DarkBlue";
       });
       features.reverse();
       geojson.features = features;
