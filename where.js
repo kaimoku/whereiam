@@ -107,11 +107,7 @@ app.get('/geojson', (req, res) => {
         "type": "FeatureCollection"
       };
 
-      let markerColor = "#FF0000";
-      let markerSymbol = "star-stroked";
-      let markerSize = "medium";
-      let umapOptions = {};
-      umapOptions.color = "Red";
+      let color = "Red";
       let features = [];
       result.forEach(loc => {
         let point = {
@@ -125,24 +121,17 @@ app.get('/geojson', (req, res) => {
             "city": loc.city ? loc.city : null,
             "state": loc.state ? loc.state : null,
             "arrivalDate": loc.arrivalDate ? loc.arrivalDate : null,
-            "marker-color": markerColor,
-            "marker-size": markerSize,
-            "marker-symbol": markerSymbol,
-            "_umap_options": umapOptions
+            "_umap_options": {
+              "color": color
+            }
           },
           "geometry": {
             "type": "Point",
             "coordinates": [ parseFloat(loc.longitude), parseFloat(loc.latitude) ]
           }
         };
-        if (umapOptions.color === "Red") {
-          console.log(point.properties.name);
-        }
         features.push(point);
-        markerColor = "#7E7E7E";
-        markerSize = "small";
-        markerSymbol = "";
-        umapOptions.color = "Blue";
+        color = "DarkBlue";
       });
       features.reverse();
       geojson.features = features;
